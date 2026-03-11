@@ -1,1 +1,36 @@
-
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guess-the-number
+  namespace: argocd
+spec:
+  # Project this application belongs to
+  project: default
+  
+  # Source - where is your Helm chart?
+  source:
+    repoURL: https://github.com/guylaiter/FinalProject_cluster-repo.git
+    targetRevision: main
+    path: helm
+  
+  # Destination - where to deploy?
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  
+  # Sync policy - how to deploy?
+  syncPolicy:
+    automated:
+      prune: true      # Delete resources when removed from Git
+      selfHeal: true   # Auto-sync if manual changes made in cluster
+      allowEmpty: false
+    
+    syncOptions:
+    - CreateNamespace=true  # Create namespace if it doesn't exist
+    
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

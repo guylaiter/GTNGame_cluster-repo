@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.appName }}-postgres
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    component: database
+spec:
+  serviceName: {{ .Values.appName }}-postgres-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+      component: database
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+        component: database
+    spec:
+      containers:
+      - name: postgres
+        image: {{ .Values.database.image.repository }}:{{ .Values.database.image.tag }}
+        imagePullPolicy: {{ .Values.database.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.database.service.port }}
+          name: postgres
+        
+        env:
+        # Database credentials from AWS Secrets Manager
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.database.secretName }}
+              key: username
+        
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.database.secretName }}
+              key: password
+        
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.database.secretName }}
+              key: database
+        
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        
+        # Mount AWS Secrets Manager secret via CSI driver
+        - name: secrets-store
+          mountPath: /mnt/secrets-store
+          readOnly: true
+        
+        resources:
+          requests:
+            memory: {{ .Values.database.resources.requests.memory }}
+            cpu: {{ .Values.database.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.database.resources.limits.memory }}
+            cpu: {{ .Values.database.resources.limits.cpu }}
+        
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: {{ .Values.appName }}-postgres-pvc
+      
+      # CSI driver volume for AWS Secrets Manager
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: {{ .Values.appName }}-aws-secrets

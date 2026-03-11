@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-config
+  namespace: {{ .Values.namespace }}
+data:
+  # Application configuration (non-sensitive)
+  SECRET_NUMBER: {{ .Values.backend.config.secretNumber | quote }}
+  
+  # Flask configuration
+  FLASK_ENV: "production"

@@ -1,1 +1,54 @@
-INIT
+# Application Configuration
+appName: guess-the-number
+namespace: default
+
+# Backend Configuration
+backend:
+  image:
+    repository: 900631658007.dkr.ecr.ap-south-1.amazonaws.com/final-project-app-repo
+    tag: v1.0.0  # Updated by CI/CD pipeline
+    pullPolicy: IfNotPresent
+  
+  replicas: 2
+  
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 5000
+  
+  # Non-sensitive configuration (stored in ConfigMap)
+  config:
+    secretNumber: "42"  # The secret number to guess
+  
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+# PostgreSQL Database Configuration
+database:
+  image:
+    repository: postgres
+    tag: "15-alpine"
+    pullPolicy: IfNotPresent
+  
+  service:
+    port: 5432
+  
+  storage:
+    size: 1Gi
+    storageClass: gp2  # AWS EBS storage
+  
+  # Secret reference - actual credentials stored in AWS Secrets Manager
+  secretName: guess-the-number-db-secret
+  
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"

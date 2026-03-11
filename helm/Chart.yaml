@@ -1,0 +1,5 @@
+apiVersion: v2
+name: guess-the-number
+version: 1.0.0
+description: A number guessing game with Flask backend and PostgreSQL database
+appVersion: "1.0.0"

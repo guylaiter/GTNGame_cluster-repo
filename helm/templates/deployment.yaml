@@ -1,1 +1,117 @@
-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}-backend
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    component: backend
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+        component: backend
+    spec:
+      containers:
+      - name: backend
+        image: {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}
+        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.backend.service.targetPort }}
+          name: http
+        
+        env:
+        # Non-sensitive config from ConfigMap
+        - name: SECRET_NUMBER
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.appName }}-config
+              key: SECRET_NUMBER
+        
+        - name: FLASK_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.appName }}-config
+              key: FLASK_ENV
+        
+        # Database credentials from AWS Secrets Manager (via Kubernetes Secret)
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.database.secretName }}
+              key: username
+        
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.database.secretName }}
+              key: password
+        
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.database.secretName }}
+              key: host
+        
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.database.secretName }}
+              key: port
+        
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.database.secretName }}
+              key: database
+        
+        # Build DATABASE_URL from components
+        - name: DATABASE_URL
+          value: "postgresql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
+        
+        volumeMounts:
+        # Mount AWS Secrets Manager secret via CSI driver
+        - name: secrets-store
+          mountPath: /mnt/secrets-store
+          readOnly: true
+        
+        resources:
+          requests:
+            memory: {{ .Values.backend.resources.requests.memory }}
+            cpu: {{ .Values.backend.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.backend.resources.limits.memory }}
+            cpu: {{ .Values.backend.resources.limits.cpu }}
+        
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      
+      volumes:
+      # CSI driver volume for AWS Secrets Manager
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: {{ .Values.appName }}-aws-secrets
