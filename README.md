@@ -1,4 +1,4 @@
-# FinalProject Cluster Configuration
+# GTNGame Cluster Configuration
 
 GitOps configuration for deploying the "Guess The Number" application to Kubernetes using Helm and ArgoCD.
 
@@ -8,9 +8,9 @@ This is **one of three repositories** that make up the complete infrastructure:
 
 | Repository | Purpose | Technology |
 |------------|---------|------------|
-| **[FinalProject_infrastructure-repo](https://github.com/guylaiter/FinalProject_infrastructure-repo)** | AWS infrastructure provisioning | Terraform, EKS, VPC, ArgoCD |
-| **[FinalProject_app-repo](https://github.com/guylaiter/FinalProject_app-repo)** | Application source code & CI/CD | Flask, PostgreSQL, GitHub Actions |
-| **[FinalProject_cluster-repo](https://github.com/guylaiter/FinalProject_cluster-repo)** ← You are here | Kubernetes manifests & GitOps | Helm, ArgoCD, K8s |
+| **[GTNGame_infra-repo](https://github.com/guylaiter/GTNGame_infra-repo)** | AWS infrastructure provisioning | Terraform, EKS, VPC, ArgoCD |
+| **[GTNGame_app-repo](https://github.com/guylaiter/GTNGame_app-repo)** | Application source code & CI/CD | Flask, PostgreSQL, GitHub Actions |
+| **[GTNGame_cluster-repo](https://github.com/guylaiter/GTNGame_cluster-repo)** ← You are here | Kubernetes manifests & GitOps | Helm, ArgoCD, K8s |
 
 ## Overview
 
@@ -51,8 +51,8 @@ Create a secret named `guess-the-number/database` with:
 
 ### Step 1: Clone This Repository
 ```bash
-git clone https://github.com/guylaiter/FinalProject_cluster-repo.git
-cd FinalProject_cluster-repo
+git clone https://github.com/guylaiter/GTNGame_app-repo.git
+cd GTNGame_app-repo
 ```
 
 ### Step 2: Update Image Tag (if needed)
@@ -300,7 +300,6 @@ This repository is designed to work with the app-repo CI/CD pipeline:
 3. **CI updates** `helm/values.yaml` in this repo with new tag
 4. **ArgoCD detects change** and deploys automatically
 
-*Note: CI/CD integration to update this repo is a future enhancement.*
 
 ## Security Notes
 
@@ -316,17 +315,15 @@ Resources deployed by this configuration:
 
 - **PostgreSQL Storage (EBS):** ~$0.10/GB/month (1GB = ~$0.10/month)
 - **LoadBalancer (ELB):** ~$16/month + data transfer
-- **Compute:** Covered by EKS nodes (from infrastructure-repo)
+- **Compute:** Covered by EKS nodes (from [GTNGame_infra-repo](https://github.com/guylaiter/GTNGame_infra-repo))
+
 
 **Total additional cost: ~$16-20/month**
 
 ## Related Documentation
 
-- **Infrastructure Setup:** See [FinalProject_infrastructure-repo](https://github.com/guylaiter/FinalProject_infrastructure-repo)
-- **Application Code:** See [FinalProject_app-repo](https://github.com/guylaiter/FinalProject_app-repo)
+- **Infrastructure Setup:** See [GTNGame_infra-repo](https://github.com/guylaiter/GTNGame_infra-repo)
+- **Application Code:** See [GTNGame_app-repo](https://github.com/guylaiter/GTNGame_app-repo)
 - **Helm Documentation:** https://helm.sh/docs/
 - **ArgoCD Documentation:** https://argo-cd.readthedocs.io/
 
-## License
-
-This project is part of a final course project.
