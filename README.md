@@ -21,6 +21,10 @@ This repository contains Kubernetes manifests and ArgoCD configuration for the c
 - **GitOps:** ArgoCD for automated deployments
 - **Load Balancing:** AWS ELB for external access
 
+## Architecture Diagram
+ 
+![Kubernetes Architecture](K8s-Architecture.png)
+
 ## Prerequisites
 
 Before using this repository, you must have:
